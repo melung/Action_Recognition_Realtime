@@ -5,7 +5,7 @@ from torch.autograd import Variable
 
 from net.utils.tgcn import ConvTemporalGraphical
 from net.utils.graph import Graph
-
+import numpy as np
 class Model(nn.Module):
     r"""Spatial temporal graph convolutional networks.
 
@@ -29,10 +29,11 @@ class Model(nn.Module):
     def __init__(self, in_channels, num_class, graph_args,
                  edge_importance_weighting, **kwargs):
         super().__init__()
-
         # load graph
         self.graph = Graph(**graph_args)
         A = torch.tensor(self.graph.A, dtype=torch.float32, requires_grad=False)
+        #print(A.shape)
+        #print(A.size(1))
         self.register_buffer('A', A)
 
         # build networks
@@ -70,13 +71,27 @@ class Model(nn.Module):
 
         # data normalization
         N, C, T, V, M = x.size()
+
         x = x.permute(0, 4, 3, 1, 2).contiguous()
+        # print("noooo")
+        # print(x)
+        # print("N : " +str(N))
+        # print("C : " + str(C))
+        # print("T : " + str(T))
+        # print("V : " + str(V))
+        # print("M : " + str(M))
+
         x = x.view(N * M, V * C, T)
+        # print("no0")
+        # print(x)
         x = self.data_bn(x)
+        # print("no1")
+        # print(x)
         x = x.view(N, M, V, C, T)
         x = x.permute(0, 1, 3, 4, 2).contiguous()
         x = x.view(N * M, C, T, V)
-
+        # print("no2")
+        # print(x)
         # forwad
         for gcn, importance in zip(self.st_gcn_networks, self.edge_importance):
             x, _ = gcn(x, self.A * importance)
@@ -189,9 +204,15 @@ class st_gcn(nn.Module):
         self.relu = nn.ReLU(inplace=True)
 
     def forward(self, x, A):
-
+        #print(x[0])
         res = self.residual(x)
+        #print(res[0])
         x, A = self.gcn(x, A)
+        #print(x[0])
         x = self.tcn(x) + res
+        #print(x[0])
+        #a = x[0]
+        #if(np.isnan(a)):
+            #os.sleep()
 
         return self.relu(x), A

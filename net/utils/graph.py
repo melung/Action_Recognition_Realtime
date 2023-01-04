@@ -70,6 +70,18 @@ class Graph():
             neighbor_link = [(i - 1, j - 1) for (i, j) in neighbor_1base]
             self.edge = self_link + neighbor_link
             self.center = 2
+        elif layout == 'ours':
+            print("aaa")
+            self.num_node = 26
+            self_link = [(i, i) for i in range(self.num_node)]
+            neighbor_link = [(0, 1), (1, 2), (2, 25), (1, 3), (3, 4),
+                              (4, 5), (5, 6), (6, 7), (7, 8), (7, 9),
+                              (1, 10), (10, 11), (11, 12), (12, 13), (13, 14),
+                              (14, 15), (14, 16), (0, 17), (17, 18), (18, 19),
+                              (19, 20), (0, 21), (21, 22), (22, 23), (23, 24)]
+            #neighbor_link = [(i - 1, j - 1) for (i, j) in neighbor_1base]
+            self.edge = self_link + neighbor_link
+            self.center = 0
         # elif layout=='customer settings'
         #     pass
         else:

@@ -1,0 +1,36 @@
+work_dir: ./work_dir/recognition/ours/ST_GCN_1112
+
+# feeder
+feeder: feeder.feeder.Feeder
+train_feeder_args:
+  data_path: ./data/ours_test_1112/ours/train_data.npy
+  label_path: ./data/ours_test_1112/ours/train_label.pkl
+test_feeder_args:
+  data_path: ./data/ours_test_1112/ours/val_data.npy
+  label_path: ./data/ours_test_1112/ours/val_label.pkl
+
+# model
+model: net.st_gcn.Model
+model_args:
+  in_channels: 3
+  num_class: 24
+  dropout: 0.5
+  edge_importance_weighting: True
+  graph_args:
+    layout: 'ours'
+    strategy: 'spatial'
+
+#optim
+optimizer: Adam
+weight_decay: 0.0001
+base_lr: 0.001
+step: [50, 100, 150, 200, 350]
+
+# training
+device: [0]
+batch_size: 16
+test_batch_size: 1
+num_epoch: 500
+
+
+

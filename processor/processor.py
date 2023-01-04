@@ -136,15 +136,9 @@ class Processor(IO):
 
             # evaluation
             self.io.print_log('Evaluation Start:')
-            self.test()
-            self.io.print_log('Done.\n')
-
-            # save the output of model
-            if self.arg.save_result:
-                result_dict = dict(
-                    zip(self.data_loader['test'].dataset.sample_name,
-                        self.result))
-                self.io.save_pkl(result_dict, 'test_result.pkl')
+            model = self.test()
+            self.io.print_log('load Done.\n')
+        return model
 
     @staticmethod
     def get_parser(add_help=False):

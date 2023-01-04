@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 # pylint: disable=W0201
+import pdb
 import sys
 import argparse
 import yaml
@@ -38,11 +39,12 @@ class REC_Processor(Processor):
     """
 
     def load_model(self):
+        print(self.arg.model)
+        print(self.arg.model_args)
         self.model = self.io.load_model(self.arg.model,
                                         **(self.arg.model_args))
         self.model.apply(weights_init)
         self.loss = nn.CrossEntropyLoss()
-        
     def load_optimizer(self):
         if self.arg.optimizer == 'SGD':
             self.optimizer = optim.SGD(
@@ -84,19 +86,31 @@ class REC_Processor(Processor):
         for data, label in loader:
 
             # get data
+            print(self.dev)
             data = data.float().to(self.dev)
+            print(np.shape(data))
             label = label.long().to(self.dev)
-
+            #print(df.isnull().any())
+            #print("data")
+            #print(np.shape(data))
+            #print("label")
+            #print(label)
             # forward
+
             output = self.model(data)
+            #print(data.isnan())
+            #print(output)
             loss = self.loss(output, label)
 
             # backward
             self.optimizer.zero_grad()
             loss.backward()
+
             self.optimizer.step()
 
             # statistics
+            #print(loss)
+            #print('aa')
             self.iter_info['loss'] = loss.data.item()
             self.iter_info['lr'] = '{:.6f}'.format(self.lr)
             loss_value.append(self.iter_info['loss'])
@@ -110,37 +124,38 @@ class REC_Processor(Processor):
     def test(self, evaluation=True):
 
         self.model.eval()
-        loader = self.data_loader['test']
-        loss_value = []
-        result_frag = []
-        label_frag = []
+        # loader = self.data_loader['test']
+        # loss_value = []
+        # result_frag = []
+        # label_frag = []
 
-        for data, label in loader:
-            
-            # get data
-            data = data.float().to(self.dev)
-            label = label.long().to(self.dev)
-
-            # inference
-            with torch.no_grad():
-                output = self.model(data)
-            result_frag.append(output.data.cpu().numpy())
-
-            # get loss
-            if evaluation:
-                loss = self.loss(output, label)
-                loss_value.append(loss.item())
-                label_frag.append(label.data.cpu().numpy())
-
-        self.result = np.concatenate(result_frag)
-        if evaluation:
-            self.label = np.concatenate(label_frag)
-            self.epoch_info['mean_loss']= np.mean(loss_value)
-            self.show_epoch_info()
-
-            # show top-k accuracy
-            for k in self.arg.show_topk:
-                self.show_topk(k)
+        return self.model
+        # for data, label in loader:
+        #
+        #     # get data
+        #     data = data.float().to(self.dev)
+        #     label = label.long().to(self.dev)
+        #     #print(np.shape(data))
+        #     # inference
+        #     with torch.no_grad():
+        #         output = self.model(data)
+        #     result_frag.append(output.data.cpu().numpy())
+        #     #print(label[0])
+        #     # get loss
+        #     if evaluation:
+        #         loss = self.loss(output, label)
+        #         loss_value.append(loss.item())
+        #         label_frag.append(label.data.cpu().numpy())
+        #
+        # self.result = np.concatenate(result_frag)
+        # if evaluation:
+        #     self.label = np.concatenate(label_frag)
+        #     self.epoch_info['mean_loss']= np.mean(loss_value)
+        #     self.show_epoch_info()
+        #
+        #     # show top-k accuracy
+        #     for k in self.arg.show_topk:
+        #         self.show_topk(k)
 
     @staticmethod
     def get_parser(add_help=False):

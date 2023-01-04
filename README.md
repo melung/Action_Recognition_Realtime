@@ -1,14 +1,40 @@
-## Reminder
+# ST-GCN기반 실시간 행동 인지 코드
 
-ST-GCN has transferred to [MMSkeleton](https://github.com/open-mmlab/mmskeleton),
-and keep on developing as an flexible open source toolbox for skeleton-based human understanding.
-You are welcome to migrate to new MMSkeleton.
-Custom networks, data loaders and checkpoints of old st-gcn are compatible with MMSkeleton.
-If you want to use old ST-GCN, please refer to [OLD_README.md](./OLD_README.md).
+## Prerequisites
+- Python3 (over 3.9) cause of multiprocessing shared memory
+- [PyTorch](http://pytorch.org/)
+- Other Python libraries can be installed by `pip install -r requirements.txt`
 
-This code base will soon be not maintained and exists as a historical artifact to supplement our AAAI papers on:
 
+### Installation
+``` shell
+cd torchlight; python setup.py install; cd ..
+
+```
+
+## 실시간 행동인지 Demo
+```shell
+#모든 Slave 컴퓨터에서 example_for_realtime_action_recognition.py코드 실행 후
+python test_realtime.py recognition -c <config파일 경로> 
+
+예시 :python test_realtime.py recognition -c config/st_gcn/ours/test.yaml
+```
+
+
+## 학습을 위한 Data Preparation
+```
+python tools/our_gendata.py --data_path <행동데이터 셋 경로> --out_folder <Preparation 데이터 저장경로>
+```
+
+## 학습 Training
+```
+python main.py recognition -c <config파일 경로> [--work_dir <work folder>]
+예시 :python main.py recognition -c config/st_gcn/ours/train.yaml
+
+```
+
+## Citation
+```
 > **Spatial Temporal Graph Convolutional Networks for Skeleton-Based Action Recognition**, Sijie Yan, Yuanjun Xiong and Dahua Lin, AAAI 2018. [[Arxiv Preprint]](https://arxiv.org/abs/1801.07455)
 
-For more recent works please checkout MMSkeleton.
-  
+```

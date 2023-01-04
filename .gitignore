@@ -109,3 +109,9 @@ ENV/
 
 # mypy
 .mypy_cache/
+/.idea/inspectionProfiles/profiles_settings.xml
+/.idea/vcs.xml
+/.idea/modules.xml
+/.idea/deployment.xml
+/.idea/Action_Recognition.iml
+/.idea/Action_Recognition_Realtime.iml

@@ -91,6 +91,8 @@ def gendata(data_path,
                           i + 1, len(sample_name), benchmark, part))
         data = read_xyz(
             os.path.join(data_path, s), max_body=max_body, num_joint=num_joint)
+        print(data[2,0,0,0])
+        print('end')
         fp[i, :, 0:data.shape[1], :, :] = data
     end_toolbar()
 
@@ -99,7 +101,7 @@ if __name__ == '__main__':
 
     parser = argparse.ArgumentParser(description='NTU-RGB-D Data Converter.')
     parser.add_argument(
-        '--data_path', default='data/NTU-RGB-D/nturgb+d_skeletons')
+        '--data_path', default='/home/insight1/Desktop/MS-G3D/data/nturgbd_raw/nturgb+d_skeletons/')
     parser.add_argument(
         '--ignored_sample_path',
         default='resource/NTU-RGB-D/samples_with_missing_skeletons.txt')
