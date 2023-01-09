@@ -222,6 +222,7 @@ if __name__ == '__main__':
                 else:
                     print(np.max(output))
                     print(str(k)+' : No action')
+
         if vis:
             fig.clear
             ax = fig.add_subplot(111, projection='3d')
