@@ -167,7 +167,7 @@ if __name__ == '__main__':
 
 
 
-    start = input("Start press a : ")
+    start = input("Press Enter to Start")
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.setsockopt(socket.SOL_SOCKET,socket.SO_BROADCAST,1)
     s.sendto("start".encode(), ('255.255.255.255',12345))
@@ -179,6 +179,11 @@ if __name__ == '__main__':
 
     if vis:
         fig = plt.figure()
+        ax = fig.add_subplot(111, projection='3d')
+        ax.set_xlim(-5, 5)
+        ax.set_ylim(-5, 5)
+        ax.set_zlim(-7, 7)
+        ax.set_box_aspect((2, 2, 3))
 
     while True:
         if k == 0:
@@ -224,25 +229,20 @@ if __name__ == '__main__':
                     print(str(k)+' : No action')
 
         if vis:
-            fig.clear
-            ax = fig.add_subplot(111, projection='3d')
-            ax.set_xlim(-5, 5)
-            ax.set_ylim(-5, 5)
-            ax.set_zlim(-7, 7)
-            ax.set_box_aspect((2, 2, 3))
 
-            ax.scatter(p[:, 0], p[:, 1], p[:, 2])
+
+            points = ax.scatter(p[:, 0], p[:, 1], p[:, 2], c='b')
             plt.pause(0.001)
             plt.draw()
-            print("aa")
+            points.remove()
 
 
-        for i in range(26):
-            x = np.asarray([p[s_idx[i], 0], p[f_idx[i], 0]])
-            y = np.asarray([p[s_idx[i], 1], p[f_idx[i], 1]])
-            z = np.asarray([p[s_idx[i], 2], p[f_idx[i], 2]])
-            if vis:
-                ax.plot(x, y, z)
+        # for i in range(26):
+        #     x = np.asarray([p[s_idx[i], 0], p[f_idx[i], 0]])
+        #     y = np.asarray([p[s_idx[i], 1], p[f_idx[i], 1]])
+        #     z = np.asarray([p[s_idx[i], 2], p[f_idx[i], 2]])
+        #     if vis:
+        #         ax.plot(x, y, z)
 
 
         k += 1
