@@ -93,6 +93,9 @@ class Feeder_kinetics(torch.utils.data.Dataset):
     def __iter__(self):
         return self
 
+    def __next__(self):
+        return 0
+
     def __getitem__(self, index):
 
         # output shape (C, T, V, M)

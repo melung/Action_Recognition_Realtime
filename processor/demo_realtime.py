@@ -36,7 +36,7 @@ class DemoRealtime(IO):
             sys.path.append('{}/build/python'.format(self.arg.openpose))
         try:
             from openpose import pyopenpose as op
-        except:
+        except Exception:
             print('Can not find Openpose Python API.')
             return
 

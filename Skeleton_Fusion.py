@@ -138,8 +138,7 @@ class Skeleton_Fusion:
 			temp_norm = np.sqrt(pow(temp_ori[0], 2) + pow(temp_ori[1], 2))
 			temp_ori = temp_ori / temp_norm
 
-			F_U = self.Extract_FV_azure(self.joint[cam_idx], ODMI_JOINT_POSITION_SHOULDER_LEFT,
-								   ODMI_JOINT_POSITION_SHOULDER_RIGHT)
+			F_U = self.Extract_FV_azure(self.joint[cam_idx], ODMI_JOINT_POSITION_SHOULDER_LEFT, ODMI_JOINT_POSITION_SHOULDER_RIGHT)
 			F_L = self.Extract_FV_azure(self.joint[cam_idx], ODMI_JOINT_POSITION_HIP_LEFT, ODMI_JOINT_POSITION_HIP_RIGHT)
 			angle = 3.141592 / 3.0
 

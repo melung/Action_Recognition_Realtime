@@ -138,6 +138,7 @@ class Processor(IO):
             self.io.print_log('Evaluation Start:')
             model = self.test()
             self.io.print_log('load Done.\n')
+
         return model
 
     @staticmethod

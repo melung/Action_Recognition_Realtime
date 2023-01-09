@@ -16,6 +16,12 @@ import torchlight
 from torchlight import import_class
 from processor import recognition
 import keyboard
+import tkinter
+import matplotlib
+matplotlib.use('TkAgg')
+import matplotlib.pyplot as plt
+from matplotlib.animation import FuncAnimation
+
 
 HOST = '192.168.0.5'#Master 컴퓨터 ip
 CLIENTS_LIST = ['192.168.0.5', '192.168.0.15'] #slave 컴퓨터 IP EX) 3개 컴퓨터 이용시 [A, B, C]
@@ -32,7 +38,7 @@ Vive_port = 6666
 action_list = ["Hands up","Forward hand","T-pose","No action","Crouching","Open","Change grenade","Throw high","Throw low","Bend","Lean","Walking","Run","Shooting Pistol","Reload Pistol","Crouching Pistol","Change Pistol","Shooting Rifle","Reload Rifle","Crouching Rifle","Change Rifle","Holding high knife","Stabbing Knife","Change knife"]
 end_port = 4444
 
-vis = False
+vis = True
 
 
 
@@ -170,6 +176,10 @@ if __name__ == '__main__':
     k = 0
     Fused_skel = []
     softmax = torch.nn.Softmax(dim=1)
+
+    if vis:
+        fig = plt.figure()
+
     while True:
         if k == 0:
             time.sleep(0.05)
@@ -180,7 +190,7 @@ if __name__ == '__main__':
             total_joints[27*4*ii*num_source:27*4*(ii+1)*num_source] = locals()[f"com{ii}_joints"][:]
 
         vive_joints[:] = vive_shared_joints
-        print(vive_joints)
+        #print(vive_joints)
         Fuse = Skeleton_Fusion(camnum=num_source*num_com, joint=total_joints, pre_joint= [] if k == 0 else Fused_skel, vive_joints= vive_joints)
         Fused_skel = Fuse.Fusion()
         # np.savetxt('./Result/csv/'+ "S" + format(subject, "03") + "C" + format(ii, "03") +"P000R000A" + format(999, "03") +"_"+ cur_time+"/COM" +format(ii,"02")+"_" +str(k)+'_data'+ '.csv', total_joints, delimiter=" ")
@@ -212,24 +222,28 @@ if __name__ == '__main__':
                 else:
                     print(np.max(output))
                     print(str(k)+' : No action')
-        # if vis:
-        #     fig, ax = plt.subplots(subplot_kw=dict(projection='3d'))
-        #     ax.set_xlim(-5, 5)
-        #     ax.set_ylim(-5, 5)
-        #     ax.set_zlim(-5, 5)
-        #     ax.set_box_aspect((2, 2, 3))
-        #
-        #     ax.scatter(p[:, 0], p[:, 1], p[:, 2])
+        if vis:
+            fig.clear
+            ax = fig.add_subplot(111, projection='3d')
+            ax.set_xlim(-5, 5)
+            ax.set_ylim(-5, 5)
+            ax.set_zlim(-7, 7)
+            ax.set_box_aspect((2, 2, 3))
+
+            ax.scatter(p[:, 0], p[:, 1], p[:, 2])
+            plt.pause(0.001)
+            plt.draw()
+            print("aa")
+
 
         for i in range(26):
             x = np.asarray([p[s_idx[i], 0], p[f_idx[i], 0]])
             y = np.asarray([p[s_idx[i], 1], p[f_idx[i], 1]])
             z = np.asarray([p[s_idx[i], 2], p[f_idx[i], 2]])
-            # if vis:
-            #     ax.plot(x, y, z)
+            if vis:
+                ax.plot(x, y, z)
 
-        # if vis:
-        #     plt.savefig('./Result/Com'+format(ii,"02")+"_"+str(k)+'.png')
+
         k += 1
         terminate_t = timeit.default_timer()
         delay_t = 1/(fps_cons+10) - (terminate_t - start_t)
@@ -237,6 +251,7 @@ if __name__ == '__main__':
             time.sleep(delay_t)
         terminate_t = timeit.default_timer()
         FPS = int(1 / (terminate_t - start_t))
+        print("Frame: " + str(k))
         print("FPS: " + str(FPS))
         #if k >300:
         if shared_end == 1 or keyboard.is_pressed("q"):

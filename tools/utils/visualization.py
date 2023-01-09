@@ -120,7 +120,7 @@ def stgcn_visualize(pose,
             blend(skeleton, text_2)
             blend(skeleton_result, text_3)
             blend(rgb_result, text_4)
-        except:
+        except Exception:
             pass
 
         if label is not None:
