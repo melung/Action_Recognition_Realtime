@@ -86,9 +86,9 @@ class REC_Processor(Processor):
         for data, label in loader:
 
             # get data
-            print(self.dev)
+            #print(self.dev)
             data = data.float().to(self.dev)
-            print(np.shape(data))
+            #print(np.shape(data))
             label = label.long().to(self.dev)
             #print(df.isnull().any())
             #print("data")
