@@ -1,4 +1,4 @@
-work_dir: ./work_dir/recognition/ours/ST_GCN_1112
+work_dir: ./work_dir/recognition/ours/ST_GCN_0110
 
 # feeder
 feeder: feeder.feeder.Feeder

@@ -219,17 +219,27 @@ if __name__ == '__main__':
                 output = output.cpu().detach().numpy()
                 #print(k)
                 if np.isnan(np.max(output)):
-                    print(str(k)+' : No action')
-                    print('nan')
+                    print('Action : No action')
+                    print('Confidence: nan')
                 elif np.max(output) > filtering_threshold:
-                    print(np.max(output))
-                    print(str(k)+ ' : '+action_list[np.argmax(output)])
+                    print('Action : ' + action_list[np.argmax(output)])
+                    print('Confidence: ',np.round(np.max(output),2))
+
                 else:
-                    print(np.max(output))
-                    print(str(k)+' : No action')
+                    print('Action : No action')
+                    print('Confidence: ',np.round(np.max(output),2))
+
 
         if vis:
-
+            if k > 150:
+                if np.isnan(np.max(output)):
+                    plt.title('Action: No action\nConfidence: nan',loc='left')
+                elif np.max(output) > filtering_threshold:
+                    plt.title('Action: '+action_list[np.argmax(output)] +'\nConfidence: ' + str(np.round(np.max(output),3)),loc='left')
+                else:
+                    plt.title('Action: No action\nConfidence: ' + str(np.round(np.max(output),3)),loc='left')
+            else:
+                plt.title('Prepare the Action Recognition', loc='left')
 
             points = ax.scatter(p[:, 0], p[:, 1], p[:, 2], c='b')
             plt.pause(0.001)
