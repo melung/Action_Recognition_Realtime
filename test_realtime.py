@@ -23,16 +23,16 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 
-HOST = '192.168.0.5'#Master 컴퓨터 ip
-CLIENTS_LIST = ['192.168.0.5', '192.168.0.15'] #slave 컴퓨터 IP EX) 3개 컴퓨터 이용시 [A, B, C]
-Port = [5555, 7777] #slave 컴퓨터마다 통신할 port 지정 EX) 3개 컴퓨터 이용시 [가, 나, 다]
-num_com = 1 #slave 컴퓨터개수
+HOST = '169.254.164.143'#Master 컴퓨터 ip
+CLIENTS_LIST = ['169.254.164.144', '169.254.164.145','169.254.164.146'] #slave 컴퓨터 IP EX) 3개 컴퓨터 이용시 [A, B, C]
+Port = [5555, 6666, 7777] #slave 컴퓨터마다 통신할 port 지정 EX) 3개 컴퓨터 이용시 [가, 나, 다]
+num_com = 3 #slave 컴퓨터개수
 num_source = 2 #한 slave 컴퓨터에 연결된 kinect 개수
-fps_cons = 30 #fps제한 (컴퓨터에 따라 다를 수 있습니다. 적절히 조절 slave 컴퓨터의 kinect fps와 같도록)
+fps_cons = 20 #fps제한 (컴퓨터에 따라 다를 수 있습니다. 적절히 조절 slave 컴퓨터의 kinect fps와 같도록)
 filtering_threshold = 0.7
 
 Vive_ip = '192.168.0.9'
-Vive_port = 6666
+Vive_port = 8888
 
 
 action_list = ["Hands up","Forward hand","T-pose","No action","Crouching","Open","Change grenade","Throw high","Throw low","Bend","Lean","Walking","Run","Shooting Pistol","Reload Pistol","Crouching Pistol","Change Pistol","Shooting Rifle","Reload Rifle","Crouching Rifle","Change Rifle","Holding high knife","Stabbing Knife","Change knife"]
@@ -168,9 +168,19 @@ if __name__ == '__main__':
 
 
     start = input("Press Enter to Start")
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.setsockopt(socket.SOL_SOCKET,socket.SO_BROADCAST,1)
-    s.sendto("start".encode(), ('255.255.255.255',12345))
+    # s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    # s.setsockopt(socket.SOL_SOCKET,socket.SO_BROADCAST,1)
+    # s.sendto("start".encode(), ('169.254.255.255',12345))
+
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(('169.254.164.144',12347))
+    s.sendto("start".encode(), ('169.254.164.144',12347))
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(('169.254.164.145', 12346))
+    s.sendto("start".encode(), ('169.254.164.145',12346))
+    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    s.connect(('169.254.164.146', 12345))
+    s.sendto("start".encode(), ('169.254.164.146',12345))
 
     shared_end[:] = np.zeros(1)
     k = 0
@@ -198,7 +208,7 @@ if __name__ == '__main__':
         #print(vive_joints)
         Fuse = Skeleton_Fusion(camnum=num_source*num_com, joint=total_joints, pre_joint= [] if k == 0 else Fused_skel, vive_joints= vive_joints)
         Fused_skel = Fuse.Fusion()
-        # np.savetxt('./Result/csv/'+ "S" + format(subject, "03") + "C" + format(ii, "03") +"P000R000A" + format(999, "03") +"_"+ cur_time+"/COM" +format(ii,"02")+"_" +str(k)+'_data'+ '.csv', total_joints, delimiter=" ")
+        np.savetxt('./Result/csv/'+ "COM_" +str(k)+'_data'+ '.csv', total_joints, delimiter=" ")
 
         p = np.asarray(Fused_skel.vJointPositions)
         #print(p)
