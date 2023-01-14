@@ -23,20 +23,26 @@ import matplotlib.pyplot as plt
 from matplotlib.animation import FuncAnimation
 
 
-HOST = '169.254.164.143'#Master 컴퓨터 ip
-CLIENTS_LIST = ['169.254.164.144', '169.254.164.145','169.254.164.146'] #slave 컴퓨터 IP EX) 3개 컴퓨터 이용시 [A, B, C]
-Port = [5555, 6666, 7777] #slave 컴퓨터마다 통신할 port 지정 EX) 3개 컴퓨터 이용시 [가, 나, 다]
-num_com = 3 #slave 컴퓨터개수
+#HOST = '169.254.164.143'#Master 컴퓨터 ip
+HOST = '192.168.0.5'#Master 컴퓨터 ip
+
+#CLIENTS_LIST = ['169.254.164.144', '169.254.164.145','169.254.164.146'] #slave 컴퓨터 IP EX) 3개 컴퓨터 이용시 [A, B, C]
+CLIENTS_LIST = ['192.168.0.5', '169.254.164.145','169.254.164.146'] #slave 컴퓨터 IP EX) 3개 컴퓨터 이용시 [A, B, C]
+
+Port = [1144, 1145, 1146] #slave 컴퓨터마다 통신할 port 지정 EX) 3개 컴퓨터 이용시 [가, 나, 다]
+start_port = 12345
+end_port = 4444
+num_com = 1 #slave 컴퓨터개수
 num_source = 2 #한 slave 컴퓨터에 연결된 kinect 개수
 fps_cons = 20 #fps제한 (컴퓨터에 따라 다를 수 있습니다. 적절히 조절 slave 컴퓨터의 kinect fps와 같도록)
 filtering_threshold = 0.7
 
 Vive_ip = '192.168.0.9'
-Vive_port = 8888
+Vive_port = 1234
 
 
 action_list = ["Hands up","Forward hand","T-pose","No action","Crouching","Open","Change grenade","Throw high","Throw low","Bend","Lean","Walking","Run","Shooting Pistol","Reload Pistol","Crouching Pistol","Change Pistol","Shooting Rifle","Reload Rifle","Crouching Rifle","Change Rifle","Holding high knife","Stabbing Knife","Change knife"]
-end_port = 4444
+
 
 vis = True
 
@@ -94,22 +100,6 @@ def get_vive_data(HOST, PORT, CLIENTS_LIST, shm_nm, nptype):
         arr[:] = joint_array
 
 
-
-
-
-
-def get_end_signal(PORT, shm_nm, nptype):
-    temp_shm = shared_memory.SharedMemory(name=shm_nm)
-    arr = np.frombuffer(buffer=temp_shm.buf, dtype=nptype)
-
-    while True:
-        print("end signal")
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        s.bind(('', PORT))
-        m = s.recvfrom(1024)
-        s.close()
-        arr[:] = np.ones(1)
-
 if __name__ == '__main__':
     parser = argparse.ArgumentParser(description='Processor collection')
     processors = dict()
@@ -129,9 +119,6 @@ if __name__ == '__main__':
 
     input_data = np.zeros((1,3,100,26,1))
 
-    end_signal = np.zeros((1))
-    shm_end = shared_memory.SharedMemory(create=True, size=end_signal.nbytes)
-    shared_end = np.frombuffer(shm_end.buf, end_signal.dtype)
     total_joints = np.zeros((num_source*num_com * 27 * 4,), dtype=float)
 
 
@@ -149,11 +136,6 @@ if __name__ == '__main__':
     vive_shared_joints [:] = vive_joints
 
 
-
-    subject = int(input("Subject num : "))
-
-    com_end = mp.Process(target=get_end_signal, args=[end_port, shm_end.name, end_signal.dtype])
-    com_end.start()
     for ii in range(num_com):
         locals()[f"com{ii}"] = mp.Process(target=get_data, args=[HOST, Port[ii], CLIENTS_LIST, locals()[f"shm{ii}"].name,
                                                                  locals()[f"com{ii}_joints"].dtype])
@@ -162,27 +144,21 @@ if __name__ == '__main__':
 
 
     for ii in range(num_com):
+        locals()[f"com{ii}"].daemon = True
         locals()[f"com{ii}"].start()
+    vive_com.daemon = True
     vive_com.start()
 
 
 
-    start = input("Press Enter to Start")
-    # s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    # s.setsockopt(socket.SOL_SOCKET,socket.SO_BROADCAST,1)
-    # s.sendto("start".encode(), ('169.254.255.255',12345))
+    b = input("Press Enter to Start")
 
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(('169.254.164.144',12347))
-    s.sendto("start".encode(), ('169.254.164.144',12347))
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(('169.254.164.145', 12346))
-    s.sendto("start".encode(), ('169.254.164.145',12346))
-    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    s.connect(('169.254.164.146', 12345))
-    s.sendto("start".encode(), ('169.254.164.146',12345))
+    for ii in range(num_com):
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.connect((CLIENTS_LIST[ii], start_port))
+        s.sendto(str(b).encode(), (CLIENTS_LIST[ii], start_port))
+        s.close()
 
-    shared_end[:] = np.zeros(1)
     k = 0
     Fused_skel = []
     softmax = torch.nn.Softmax(dim=1)
@@ -208,8 +184,6 @@ if __name__ == '__main__':
         #print(vive_joints)
         Fuse = Skeleton_Fusion(camnum=num_source*num_com, joint=total_joints, pre_joint= [] if k == 0 else Fused_skel, vive_joints= vive_joints)
         Fused_skel = Fuse.Fusion()
-        np.savetxt('./Result/csv/'+ "COM_" +str(k)+'_data'+ '.csv', total_joints, delimiter=" ")
-
         p = np.asarray(Fused_skel.vJointPositions)
         #print(p)
         np.nan_to_num(p, copy=0)
@@ -243,27 +217,18 @@ if __name__ == '__main__':
         if vis:
             if k > 150:
                 if np.isnan(np.max(output)):
-                    plt.title('Action: No action\nConfidence: nan',loc='left')
+                    plt.title('Action: No action\nConfidence: nan\nFrame: '+ str(k),loc='left')
                 elif np.max(output) > filtering_threshold:
-                    plt.title('Action: '+action_list[np.argmax(output)] +'\nConfidence: ' + str(np.round(np.max(output),3)),loc='left')
+                    plt.title('Action: '+action_list[np.argmax(output)] +'\nConfidence: ' + str(np.round(np.max(output),3))+'\nFrame: '+ str(k),loc='left')
                 else:
-                    plt.title('Action: No action\nConfidence: ' + str(np.round(np.max(output),3)),loc='left')
+                    plt.title('Action: No action\nConfidence: ' + str(np.round(np.max(output),3))+'\nFrame: '+ str(k),loc='left')
             else:
-                plt.title('Prepare the Action Recognition', loc='left')
+                plt.title('Prepare the Action Recognition\nFrame: '+ str(k), loc='left')
 
             points = ax.scatter(p[:, 0], p[:, 1], p[:, 2], c='b')
             plt.pause(0.001)
             plt.draw()
             points.remove()
-
-
-        # for i in range(26):
-        #     x = np.asarray([p[s_idx[i], 0], p[f_idx[i], 0]])
-        #     y = np.asarray([p[s_idx[i], 1], p[f_idx[i], 1]])
-        #     z = np.asarray([p[s_idx[i], 2], p[f_idx[i], 2]])
-        #     if vis:
-        #         ax.plot(x, y, z)
-
 
         k += 1
         terminate_t = timeit.default_timer()
@@ -272,11 +237,14 @@ if __name__ == '__main__':
             time.sleep(delay_t)
         terminate_t = timeit.default_timer()
         FPS = int(1 / (terminate_t - start_t))
-        print("Frame: " + str(k))
+
         print("FPS: " + str(FPS))
         #if k >300:
-        if shared_end == 1 or keyboard.is_pressed("q"):
-            shared_end[:] = np.zeros(1)
+        if keyboard.is_pressed("q"):
+            for ii in range(num_com):
+                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                s.connect((CLIENTS_LIST[ii], end_port))
+                s.close()
             break
 
 
