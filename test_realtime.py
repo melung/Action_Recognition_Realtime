@@ -56,16 +56,16 @@ f_idx = np.asarray(f_idx.split(), dtype=int)
 cur_time = str(time.localtime().tm_year)+str(time.localtime().tm_mon) +str(time.localtime().tm_mday)+str(time.localtime().tm_min)
 
 # Press the green button in the gutter to run the script.
-def get_data(HOST, PORT, CLIENTS_LIST, shm_nm, nptype):
+def get_data(HOST, PORT, CLIENTS_LIST, shm_nm, nptype, kk):
     temp_shm = shared_memory.SharedMemory(name = shm_nm)
     arr = np.frombuffer(buffer=temp_shm.buf, dtype=nptype)
 
-    ADDR = (HOST, PORT)
-
+    ADDR = (HOST, PORT + 100*kk)
     serverSocket = MLSocket()
     serverSocket.bind(ADDR)
 
     while True:
+
         serverSocket.listen(0)
         clientSocket, addr_info = serverSocket.accept()
 
@@ -123,12 +123,14 @@ if __name__ == '__main__':
 
 
     for ii in range(num_com):
-        locals()[f"com{ii}_joints"] = np.zeros((num_source * 27 * 4,), dtype=float)
+        for kk in range(num_source):
+            locals()[f"com{ii}_{kk}_joints"] = np.zeros((27 * 4,), dtype=float)
 
     for ii in range(num_com):
-        locals()[f"shm{ii}"] = shared_memory.SharedMemory(create=True, size=locals()[f"com{ii}_joints"].nbytes)
-        locals()[f"shared_joints{ii}"] = np.frombuffer(locals()[f"shm{ii}"].buf, locals()[f"com{ii}_joints"].dtype)
-        locals()[f"shared_joints{ii}"][:] = locals()[f"com{ii}_joints"]
+        for kk in range(num_source):
+            locals()[f"shm{ii}_{kk}"] = shared_memory.SharedMemory(create=True, size=locals()[f"com{ii}_{kk}_joints"].nbytes)
+            locals()[f"shared_joints{ii}_{kk}"] = np.frombuffer(locals()[f"shm{ii}_{kk}"].buf, locals()[f"com{ii}_{kk}_joints"].dtype)
+            locals()[f"shared_joints{ii}_{kk}"][:] = locals()[f"com{ii}_{kk}_joints"]
 
     vive_joints = np.zeros((3 * 3,), dtype=float)
     shm_vive = shared_memory.SharedMemory(create=True, size=vive_joints.nbytes)
@@ -137,15 +139,18 @@ if __name__ == '__main__':
 
 
     for ii in range(num_com):
-        locals()[f"com{ii}"] = mp.Process(target=get_data, args=[HOST, Port[ii], CLIENTS_LIST, locals()[f"shm{ii}"].name,
-                                                                 locals()[f"com{ii}_joints"].dtype])
+        for kk in range(num_source):
+            locals()[f"com{ii}_{kk}"] = mp.Process(target=get_data, args=[HOST, Port[ii], CLIENTS_LIST, locals()[f"shm{ii}_{kk}"].name,
+                                                                     locals()[f"com{ii}_{kk}_joints"].dtype, kk])
+
     vive_com = mp.Process(target=get_vive_data, args=[HOST, Vive_port, CLIENTS_LIST, shm_vive.name,
                                                              vive_joints.dtype])
 
 
     for ii in range(num_com):
-        locals()[f"com{ii}"].daemon = True
-        locals()[f"com{ii}"].start()
+        for kk in range(num_source):
+            locals()[f"com{ii}_{kk}"].daemon = True
+            locals()[f"com{ii}_{kk}"].start()
     vive_com.daemon = True
     vive_com.start()
 
@@ -154,10 +159,11 @@ if __name__ == '__main__':
     b = input("Press Enter to Start")
 
     for ii in range(num_com):
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        s.connect((CLIENTS_LIST[ii], start_port))
-        s.sendto(str(b).encode(), (CLIENTS_LIST[ii], start_port))
-        s.close()
+        for kk in range(num_source):
+            s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            s.connect((CLIENTS_LIST[ii], start_port + kk*100))
+            s.sendto(str(b).encode(), (CLIENTS_LIST[ii], start_port + num_source*100))
+            s.close()
 
     k = 0
     Fused_skel = []
@@ -177,8 +183,9 @@ if __name__ == '__main__':
         start_t = timeit.default_timer()
 
         for ii in range(num_com):
-            locals()[f"com{ii}_joints"][:] = locals()[f"shared_joints{ii}"]
-            total_joints[27*4*ii*num_source:27*4*(ii+1)*num_source] = locals()[f"com{ii}_joints"][:]
+            for kk in range(num_source):
+                locals()[f"com{ii}_{kk}_joints"][:] = locals()[f"shared_joints{ii}_{kk}"]
+                total_joints[27*4*(2*ii+kk):27*4*(2*ii+kk+1)] = locals()[f"com{ii}_{kk}_joints"][:]
 
         vive_joints[:] = vive_shared_joints
         #print(vive_joints)
@@ -236,15 +243,16 @@ if __name__ == '__main__':
         if delay_t > 0:
             time.sleep(delay_t)
         terminate_t = timeit.default_timer()
-        FPS = int(1 / (terminate_t - start_t))
+        FPS = 1 / (terminate_t - start_t)
 
         print("FPS: " + str(FPS))
         #if k >300:
         if keyboard.is_pressed("q"):
             for ii in range(num_com):
-                s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-                s.connect((CLIENTS_LIST[ii], end_port))
-                s.close()
+                for kk in range(num_source):
+                    s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    s.connect((CLIENTS_LIST[ii], end_port+100*kk))
+                    s.close()
             break
 
 
